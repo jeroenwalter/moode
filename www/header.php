@@ -157,6 +157,7 @@
 
 		<div id="config-tabs" class="viewswitch-cfgs hide">
 			<a id="lib-config-btn" class="btn" href="lib-config.php">Library</a>
+			<a id="collections-config-btn" class="btn" href="collections-config.php">Collections</a>
 			<a id="snd-config-btn" class="btn" href="snd-config.php">Audio</a>
 			<a id="net-config-btn" class="btn" href="net-config.php">Network</a>
 			<a id="sys-config-btn" class="btn" href="sys-config.php">System</a>

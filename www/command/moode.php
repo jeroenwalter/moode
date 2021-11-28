@@ -19,6 +19,7 @@
  */
 
 require_once dirname(__FILE__) . '/../inc/playerlib.php';
+require_once dirname(__FILE__) . '/../inc/collections.php';
 
 //workerLog('moode.php: cmd=(' . $_GET['cmd'] . ')');
 if (isset($_GET['cmd']) && $_GET['cmd'] === '') {
@@ -578,7 +579,7 @@ elseif (in_array($_GET['cmd'], $playqueue_cmds) || in_array($_GET['cmd'], $other
 	}
 }
 // Other commands
-else {
+elseif (!handleCollectionCommand()) {
 	switch ($_GET['cmd']) {
 		case 'read_cfgs':
 		case 'read_cfgs_no_radio':

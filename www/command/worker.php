@@ -23,6 +23,7 @@
  */
 
 require_once dirname(__FILE__) . '/../inc/playerlib.php';
+require_once dirname(__FILE__) . '/../inc/collections.php';
 require_once dirname(__FILE__) . '/../inc/autocfg.php';
 require_once dirname(__FILE__) . '/../inc/eqp.php';
 require_once dirname(__FILE__) . '/../inc/cdsp.php';
@@ -109,6 +110,9 @@ sysCmd('touch /var/local/www/sysinfo.txt');
 sysCmd('touch /var/local/www/currentsong.txt');
 sysCmd('touch /var/log/shairport-sync.log');
 sysCmd('mkdir ' . THMCACHE_DIR . ' > /dev/null 2>&1');
+
+setupCollections();
+
 // Delete any tmp files left over from New/Edit radio station
 sysCmd('rm /var/local/www/imagesw/radio-logos/' . TMP_STATION_PREFIX . '* > /dev/null 2>&1');
 sysCmd('rm /var/local/www/imagesw/radio-logos/thumbs/' . TMP_STATION_PREFIX . '* > /dev/null 2>&1');

@@ -25,6 +25,8 @@
  *
  */
 
+require_once dirname(__FILE__) . '/collections.php';
+
 define('MPD_RESPONSE_ERR', 'ACK');
 define('MPD_RESPONSE_OK',  'OK');
 define('MPD_MUSICROOT',  '/var/lib/mpd/music/');
@@ -713,7 +715,7 @@ function libcache_file() {
 			break;
 	}
 
-	return LIBCACHE_BASE . $suffix;
+	return getCollectionLibcacheBase() . $suffix;
 }
 
 function json_error_message() {
