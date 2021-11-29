@@ -32,7 +32,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "node_modules/.bin/gulp build",
     "deploy": "sudo node_modules/.bin/gulp deploy --force",
-    "restart-moode": "moodeutl -r"
+    "restart-moode": "moodeutl -r",
+    "build/deploy/restart": "node_modules/.bin/gulp build && sudo node_modules/.bin/gulp deploy --force && moodeutl -r"
   },
   "server": {
     "proxy": "http://moode.test"

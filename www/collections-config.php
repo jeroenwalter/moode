@@ -21,21 +21,28 @@
  *
  */
 
-require_once dirname(__FILE__) . '/inc/playerlib.php';
+require_once dirname(__FILE__) . '/inc/collections.php';
 
-playerSession('open', '' ,'');
+playerSession('open');
 
 // COLLECTIONS CONFIG FORM
 if (!isset($_GET['cmd'])) {
 	$tpl = "collections-config.html";
 
 	// display list of collections if any
-	
-	// messages
-	$_collections .= '<p class="btn btn-large" style="width: 240px; background-color: #333;">None configured</p><p></p>';
+	$collections = listCollections();
+	$activeCollection = getCollection(getActiveCollectionId());
+	$_collections .= "<p>Active collection: " . (is_null($activeCollection) ? "-" : $activeCollection['title']) . "</p>";
+	foreach ($collections as $collection) {
+		$icon = ($collection['id'] == $activeCollection['id']) ? "<i class='fas fa-check green sx'></i>" : "<i class='fas fa-times red sx'></i>";
+		$_collections .= "<p><a href=\"collections-config.php?cmd=edit&id=" . $collection['id'] . "\" class='btn btn-large' style='width:240px;background-color:#333;text-align:left;'> " . $icon . " [" . $collection['id'] . "] " . $collection['title'] . "</a></p>";
+	}
+
+	if (empty($collections))
+		$_collections .= '<p class="btn btn-large" style="width: 240px; background-color: #333;">None configured</p><p></p>';
 }
 
-session_write_close();
+playerSession('unlock');
 
 $section = basename(__FILE__, '.php');
 storeBackLink($section, $tpl);

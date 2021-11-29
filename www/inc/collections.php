@@ -28,19 +28,22 @@
 define('COLLECTIONS_DIR', '/var/local/www/collections/');
 define('COLLECTIONS_LIBCACHE_BASE', 'libcache');
 define('COLLECTIONS_PARAMETERS', 'parameters.json');
-define('COLLECTIONS_ACTIVE_COLLECTION_ID', 'library_collection_name');
+define('COLLECTIONS_ACTIVE_COLLECTION_ID', 'library_collection_id');
 
 require_once dirname(__FILE__) . '/playerlib.php';
 
 // TODO: Why not store the collection parameters in SQL?
 
+/**
+ * Ultimately setting up the collections should be added to the moode installer instead of calling this method from worker.php
+ */
 function setupCollections() {
 	workerLog('worker: Setup collections');
 
 	mkdir(COLLECTIONS_DIR, 0777, false);
 	
 	$dbh = cfgdb_connect();
-	sdbquery("INSERT INTO cfg_system (param, value) SELECT '" . COLLECTIONS_ACTIVE_COLLECTION_NAME . "', '' WHERE NOT EXISTS(SELECT 1 FROM cfg_system WHERE param = '" . COLLECTIONS_ACTIVE_COLLECTION_NAME ."');", $dbh);
+	sdbquery("INSERT INTO cfg_system (param, value) SELECT '" . COLLECTIONS_ACTIVE_COLLECTION_ID . "', '' WHERE NOT EXISTS(SELECT 1 FROM cfg_system WHERE param = '" . COLLECTIONS_ACTIVE_COLLECTION_ID ."');", $dbh);
 }
 
 function handleCollectionCommand() {
@@ -62,6 +65,10 @@ function handleCollectionCommand() {
 			echo json_encode(listCollections());
 			$handled = true;
 			break;
+		case 'getactivecollection':
+			echo json_encode(getCollection(getActiveCollectionId()));
+			$handled = true;
+			break;
 		case 'getcollection':
 			echo json_encode(getCollection($_POST['collection']));
 			$handled = true;
@@ -73,7 +80,7 @@ function handleCollectionCommand() {
 
 function getCollectionLibcacheBase() {
 	$activeCollectionId = getActiveCollectionId();
-	return is_null($activeCollection) 
+	return is_null($activeCollectionId) 
 		? LIBCACHE_BASE
 		: COLLECTIONS_DIR . $activeCollectionId . "/" . COLLECTIONS_LIBCACHE_BASE;
 }
@@ -83,7 +90,7 @@ function createCollection($title) {
 		return 'Error: empty collection name';
 	}
 
-	workerLog('Creating collection ' . $title);
+	debugLog('collection: Creating collection ' . $title);
 	
 	// For now use a unique id for the folder name instead of creating a valid filename from $name
 	$collectionId = uniqid('collection-', false);
@@ -97,7 +104,7 @@ function createCollection($title) {
 	$json = json_encode($collection);
 
 	if (false === file_put_contents($collectionDir . COLLECTIONS_PARAMETERS, $json)) {
-		workerLog('createCollection(): error: file create failed: ' . $collectionDir . COLLECTIONS_PARAMETERS);
+		debugLog('createCollection(): error: file create failed: ' . $collectionDir . COLLECTIONS_PARAMETERS);
 		return 'error: file create failed: ' . $collectionDir . COLLECTIONS_PARAMETERS;
 	}
 
@@ -110,11 +117,13 @@ function createCollection($title) {
 	sysCmd('touch ' . $libcache_base . '_lossy.json');
 	sysCmd('touch ' . $libcache_base . '_tag.json');
 
+	sysCmd('chmod -R 0777 ' . $collectionDir . '*');
+
 	return 'OK';
 }
 
 function deleteCollection($collectionId) {
-	workerLog('Deleting collection ' . $collectionId);
+	debugLog('collection: Deleting collection ' . $collectionId);
 
 	if (is_null(getCollection($collectionId))) {
 		return "Collection not found";
@@ -130,7 +139,6 @@ function deleteCollection($collectionId) {
 }
 
 function listCollections() {
-
 	$retval = array();
 	$iterator = new DirectoryIterator(COLLECTIONS_DIR);
 	foreach ($iterator as $fileinfo) {
@@ -144,23 +152,14 @@ function listCollections() {
 	return $retval;
 }
 
-function listCollections_org() {
-	$files = scandir(COLLECTIONS_DIR);
-
-	$retval = array();
-	array_push($retval, COLLECTIONS_DIR);
-	foreach ($files as $file) {
-		if (!is_dot($file) && is_dir($file)) 
-			array_push($retval, $file);
-	}
-
-	return $retval;
-}
-
 function getCollection($collectionId) {
+	debugLog('collection: Get collection ' . $collectionId);
+
 	$collectionFile = COLLECTIONS_DIR . $collectionId . '/' . COLLECTIONS_PARAMETERS;
+	debugLog('collection: Get collection ' . $collectionFile);
+
 	if (file_exists($collectionFile))
-		return json_decode(file_get_contents($collectionFile));	
+		return json_decode(file_get_contents($collectionFile), true);	
 		
 	return NULL;
 }
@@ -173,18 +172,21 @@ function getActiveCollectionId() {
 	return NULL;
 }
 
-
 function activateCollection($name){
-	workerLog('Activating collection ' . $name);
+	debugLog('collection: Activating collection ' . $name);
 
 	if (is_null(getCollection($name))) {
+		debugLog('collection: Collection not found ' . $name);
 		return "Collection not found";
 	}
 
-	loadLibrary();
+	playerSession('open');
+	playerSession('write', COLLECTIONS_ACTIVE_COLLECTION_ID, $name);
+	playerSession('unlock');
+
+	//loadLibrary();
 	return "OK";
 }
-
 
 function getCollectionParameters($name) {
 	if (is_null(getCollection($name))) {
