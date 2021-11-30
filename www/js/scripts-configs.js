@@ -66,7 +66,10 @@ jQuery(document).ready(function($){ 'use strict';
     	if ($('.lib-config').length) {
     		$('#lib-config-btn').addClass('active');
     	}
-    	else if ($('.snd-config').length) {
+    	else if ($('.collections-config').length) {
+    		$('#collections-config-btn').addClass('active');
+    	}
+		else if ($('.snd-config').length) {
     		$('#snd-config-btn').addClass('active');
     	}
     	else if ($('.net-config').length) {
