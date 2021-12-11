@@ -19,10 +19,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * This is based on the @chris-rudmin 2019-08-08 rewrite of the GenLibrary()
- * function to support the new Library renderer /var/www/js/scripts-library.js
- * Refer to https://github.com/moode-player/moode/pull/16 for more info.
- *
  */
 
 define('COLLECTIONS_DIR', '/var/local/www/collections/');
@@ -101,6 +97,11 @@ function createCollection($title) {
 	$collection = array();
 	$collection["id"] = $collectionId;
 	$collection["title"] = $title;
+	$collection["flatlist_filters"] = array();
+	$collection["flatlist_filters"][0] = array();
+	$collection["flatlist_filters"][0]["filter"] = $_SESSION['library_flatlist_filter'];
+	$collection["flatlist_filters"][0]["str"] = $_SESSION['library_flatlist_filter_str'];
+	
 	$json = json_encode($collection);
 
 	if (false === file_put_contents($collectionDir . COLLECTIONS_PARAMETERS, $json)) {
@@ -122,6 +123,17 @@ function createCollection($title) {
 	return 'OK';
 }
 
+function createDefaultCollection() {
+	$collection = array();
+	$collection["id"] = '';
+	$collection["title"] = '';
+	$collection["flatlist_filters"] = array();
+	$collection["flatlist_filters"][0] = array();
+	$collection["flatlist_filters"][0]["filter"] = $_SESSION['library_flatlist_filter'];
+	$collection["flatlist_filters"][0]["str"] = $_SESSION['library_flatlist_filter_str'];
+	return $collection;
+}
+
 function deleteCollection($collectionId) {
 	debugLog('collection: Deleting collection ' . $collectionId);
 
@@ -140,6 +152,7 @@ function deleteCollection($collectionId) {
 
 function listCollections() {
 	$retval = array();
+	array_push($retval, createDefaultCollection());
 	$iterator = new DirectoryIterator(COLLECTIONS_DIR);
 	foreach ($iterator as $fileinfo) {
     	if (!$fileinfo->isDot() && $fileinfo->isDir()) {
@@ -153,10 +166,10 @@ function listCollections() {
 }
 
 function getCollection($collectionId) {
-	debugLog('collection: Get collection ' . $collectionId);
+	debugLog("getCollection: Get collection $collectionId");
 
 	$collectionFile = COLLECTIONS_DIR . $collectionId . '/' . COLLECTIONS_PARAMETERS;
-	debugLog('collection: Get collection ' . $collectionFile);
+	debugLog("getCollection: collectionFile $collectionFile");
 
 	if (file_exists($collectionFile))
 		return json_decode(file_get_contents($collectionFile), true);	
@@ -172,12 +185,18 @@ function getActiveCollectionId() {
 	return NULL;
 }
 
-function activateCollection($name){
-	debugLog('collection: Activating collection ' . $name);
+function getActiveCollection() {
+	if (is_null(getActiveCollectionId()))
+		return createDefaultCollection();
+	return getCollection(getActiveCollectionId());
+}
 
-	if (is_null(getCollection($name))) {
-		debugLog('collection: Collection not found ' . $name);
-		return "Collection not found";
+function activateCollection($name) {
+	debugLog("activateCollection: Activating collection $name");
+
+	if (!empty($name) && is_null(getCollection($name))) {
+		debugLog("activateCollection: Collection not found: $name");
+		return "Error: not found";
 	}
 
 	playerSession('open');
@@ -190,12 +209,24 @@ function activateCollection($name){
 
 function getCollectionParameters($name) {
 	if (is_null(getCollection($name))) {
-		return "Collection not found";
+		return "Error: not found";
 	}
 }
 
 function setCollectionParameters($params) {
-	if (is_null(getCollection($name))) {
-		return "Collection not found";
+	if (is_null(getCollection($params))) {
+		return "Error: not found";
 	}
+}
+
+
+function collectionGetFilesAndMetadataFromMPD($sock, $dirs) {
+	$collection = getActiveCollection();
+
+	$resp = '';
+	foreach ($dirs as $dir) {
+		foreach($collection["flatlist_filters"] as $flatlist_filter)
+		$resp .= getAndFilterFilesFromMpd($sock, $dir, $flatlist_filter["filter"], $flatlist_filter["str"]);
+	}
+	return $resp;
 }

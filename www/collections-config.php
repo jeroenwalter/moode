@@ -24,6 +24,19 @@
 require_once dirname(__FILE__) . '/inc/collections.php';
 
 playerSession('open');
+$tpl = "";
+$_collections = "";
+
+if ($_GET['cmd'] == 'activate') {
+	activateCollection($_GET['id']);
+	unset($_GET['cmd']);
+}
+
+if ($_GET['cmd'] == 'add') {
+	createCollection("New Collection");
+	unset($_GET['cmd']);
+}
+
 
 // COLLECTIONS CONFIG FORM
 if (!isset($_GET['cmd'])) {
@@ -31,17 +44,23 @@ if (!isset($_GET['cmd'])) {
 
 	// display list of collections if any
 	$collections = listCollections();
-	$activeCollection = getCollection(getActiveCollectionId());
-	$_collections .= "<p>Active collection: " . (is_null($activeCollection) ? "-" : $activeCollection['title']) . "</p>";
+	$activeCollection = getActiveCollection();
+	$_collections .= "<p>Active collection: " . (empty($activeCollection['id']) ? "-" : $activeCollection['title']) . "</p>";
 	foreach ($collections as $collection) {
 		$icon = ($collection['id'] == $activeCollection['id']) ? "<i class='fas fa-check green sx'></i>" : "<i class='fas fa-times red sx'></i>";
-		$_collections .= "<p><a href=\"collections-config.php?cmd=edit&id=" . $collection['id'] . "\" class='btn btn-large' style='width:240px;background-color:#333;text-align:left;'> " . $icon . " [" . $collection['id'] . "] " . $collection['title'] . "</a></p>";
+		$_collections .= "<p><a href=\"collections-config.php?cmd=edit&id=" . $collection['id'] . "\" class='btn btn-large' style='width:240px;background-color:#333;text-align:left;'> " . $icon . " [" . $collection['id'] . "] " . $collection['title'] . "</a>";
+		$_collections .= "<a href=\"collections-config.php?cmd=activate&id=" . $collection['id'] ."\"><button class=\"btn btn-medium btn-primary\">Activate</button></a>";
+		$_collections .= "</p>";
+
+		
+
 	}
 
 	if (empty($collections))
 		$_collections .= '<p class="btn btn-large" style="width: 240px; background-color: #333;">None configured</p><p></p>';
-}
+} elseif ($_GET['cmd'] == 'edit') {
 
+}
 playerSession('unlock');
 
 $section = basename(__FILE__, '.php');
