@@ -81,6 +81,10 @@ function getCollectionLibcacheBase() {
 		: COLLECTIONS_DIR . $activeCollectionId . "/" . COLLECTIONS_LIBCACHE_BASE;
 }
 
+function getCollectionDir($collectionId) {
+	return COLLECTIONS_DIR . $collectionId . '/';
+}
+
 function createCollection($title) {
 	if (is_null($title) || empty(trim($title))) {
 		return 'Error: empty collection name';
@@ -90,7 +94,7 @@ function createCollection($title) {
 	
 	// For now use a unique id for the folder name instead of creating a valid filename from $name
 	$collectionId = uniqid('collection-', false);
-	$collectionDir = COLLECTIONS_DIR . $collectionId . '/';
+	$collectionDir = getCollectionDir($collectionId);
 
 	mkdir($collectionDir, 0777, false);
 
@@ -137,7 +141,7 @@ function createDefaultCollection() {
 function deleteCollection($collectionId) {
 	debugLog('collection: Deleting collection ' . $collectionId);
 
-	if (is_null(getCollection($collectionId))) {
+	if (empty(getCollection($collectionId))) {
 		return "Collection not found";
 	}
 
@@ -178,7 +182,6 @@ function getCollection($collectionId) {
 }
 
 function getActiveCollectionId() {
-	
 	if (!empty($_SESSION[COLLECTIONS_ACTIVE_COLLECTION_ID]))
 		return $_SESSION[COLLECTIONS_ACTIVE_COLLECTION_ID];
 
@@ -191,32 +194,22 @@ function getActiveCollection() {
 	return getCollection(getActiveCollectionId());
 }
 
-function activateCollection($name) {
-	debugLog("activateCollection: Activating collection $name");
+function activateCollection($collectionId) {
+	debugLog("activateCollection: Activating collection $collectionId");
 
-	if (!empty($name) && is_null(getCollection($name))) {
-		debugLog("activateCollection: Collection not found: $name");
+	if (!empty($collectionId) && is_null(getCollection($collectionId))) {
+		debugLog("activateCollection: Collection not found: $collectionId");
 		return "Error: not found";
 	}
 
 	playerSession('open');
-	playerSession('write', COLLECTIONS_ACTIVE_COLLECTION_ID, $name);
+	playerSession('write', COLLECTIONS_ACTIVE_COLLECTION_ID, $collectionId);
 	playerSession('unlock');
 
-	//loadLibrary();
+	// TODO: replace with better method:
+	sendEngCmd('libupd_done');
+	
 	return "OK";
-}
-
-function getCollectionParameters($name) {
-	if (is_null(getCollection($name))) {
-		return "Error: not found";
-	}
-}
-
-function setCollectionParameters($params) {
-	if (is_null(getCollection($params))) {
-		return "Error: not found";
-	}
 }
 
 
@@ -226,7 +219,40 @@ function collectionGetFilesAndMetadataFromMPD($sock, $dirs) {
 	$resp = '';
 	foreach ($dirs as $dir) {
 		foreach($collection["flatlist_filters"] as $flatlist_filter)
-		$resp .= getAndFilterFilesFromMpd($sock, $dir, $flatlist_filter["filter"], $flatlist_filter["str"]);
+			$resp .= getAndFilterFilesFromMpd($sock, $dir, $flatlist_filter["filter"], $flatlist_filter["str"]);
 	}
 	return $resp;
+}
+
+function collectionRebuild($collectionId) {
+	if (empty($collectionId))
+		return "Error: can't rebuild default collection yet";
+
+	if (is_null(getCollection($collectionId))) {
+		debugLog("collectionRebuild: Collection not found: $collectionId");
+		return "Error: not found";
+	}
+
+	collectionClearLibCacheAll($collectionId);
+
+	// TODO: replace with better method:
+	sendEngCmd('libupd_done');
+
+	return "OK";
+}
+
+function collectionClearLibCacheAll($collectionId) {
+	$collectionDir = getCollectionDir($collectionId);
+	$libcache_base = $collectionDir . COLLECTIONS_LIBCACHE_BASE;
+	sysCmd('truncate ' . $libcache_base . '_* --size 0');
+	//cfgdb_update('cfg_system', cfgdb_connect(), 'lib_pos','-1,-1,-1');
+}
+
+function collectionClearLibCacheFiltered($collectionId) {
+	$collectionDir = getCollectionDir($collectionId);
+	$libcache_base = $collectionDir . COLLECTIONS_LIBCACHE_BASE;
+	sysCmd('truncate ' . $libcache_base . '_folder.json --size 0');
+	sysCmd('truncate ' . $libcache_base . '_format.json --size 0');
+	sysCmd('truncate ' . $libcache_base . '_tag.json --size 0');
+	//cfgdb_update('cfg_system', cfgdb_connect(), 'lib_pos','-1,-1,-1');
 }
