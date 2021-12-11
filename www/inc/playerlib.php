@@ -2631,10 +2631,6 @@ function startAirplay() {
 		$logfile = '/dev/null';
 	}
 
-	// Get device num
-	$array = sdbquery('select value from cfg_mpd where param="device"', cfgdb_connect());
-	$device = $array[0]['value'];
-
 	if ($_SESSION['audioout'] == 'Bluetooth') {
 		$device = 'btstream';
 	}
@@ -2675,8 +2671,9 @@ function startSpotify() {
 		$cfg_spotify[$row['param']] = $row['value'];
 	}
 
-	// Local or Bluetooth output
-	$device = $_SESSION['audioout'] == 'Local' ? '_audioout' : 'btstream';
+	// Output device
+	// NOTE: Specifying Loopback instead of _audioout when Multiroom TX is On greatly reduces audio glitches
+	$device = $_SESSION['audioout'] == 'Local' ? ($_SESSION['multiroom_tx'] == 'On' ? 'plughw:Loopback,0' : '_audioout') : 'btstream';
 
 	// Options
 	$dither = empty($cfg_spotify['dither']) ? '' : ' --dither ' . $cfg_spotify['dither'];
@@ -3831,7 +3828,7 @@ function updReceiverVol ($cmd) {
 		// NOTE: set-mpdvol checks to see if Receiver opted in for Master volume
 		if (false === ($result = file_get_contents('http://' . $ip_addresses[$i]  . '/command/?cmd=trx-status.php -set-mpdvol ' . $cmd))) {
 			if (false === ($result = file_get_contents('http://' . $ip_addresses[$i]  . '/command/?cmd=trx-status.php -set-mpdvol ' . $cmd))) {
-				workerLog('updReceiverVol(): remote volume cmd (' . $cmd . ') failed: ' . $ip_hostnames[$i]);
+				debugLog('updReceiverVol(): remote volume cmd (' . $cmd . ') failed: ' . $ip_hostnames[$i]);
 			}
 		}
 	}

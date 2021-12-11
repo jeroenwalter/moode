@@ -15,9 +15,23 @@
 #
 ################################################################################
 
+Updates
+
+- UPD: Add otg_mode=1 option for CM4 to /boot/config.txt
+- UPD: Add ALSA volume input field to Receiver Config
+
+Radio stations
+
+- NEW: CDNX
+- NEW: Dandelion Radio
+- NEW: KCSM
+
 Bug fixes
 
-- FIX: Missing div in indextpl.html
+- FIX: Extra div in indextpl.html
+- FIX: Event filtering in librespot event script
+- FIX: Multiroom ALSA config for librespot
+- FIX: System info not reporting WiFi/Bt adapters for Zero 2 W
 
 ################################################################################
 #
