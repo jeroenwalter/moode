@@ -385,8 +385,7 @@ function loadLibrary($sock) {
 	}
 }
 
-
-function getAndFilterFilesFromMpd($sock, $dir, $flatlist_filter, $flatlist_filter_str) {
+function createSearchFilter($flatlist_filter, $flatlist_filter_str) {
 	// NOTE: MPD must be compiled with libpcre++-dev to make use of PERL compatible regex
 	// NOTE: Logic in genLibrary() determines whether M4A format is Lossless or Lossy
 	switch ($flatlist_filter) {
@@ -396,11 +395,11 @@ function getAndFilterFilesFromMpd($sock, $dir, $flatlist_filter, $flatlist_filte
 		case 'encoded':
 		case 'hdonly':
 		case 'year':
-			$cmd = "search base \"" . $dir . "\"";
+			$cmd = "";
 			break;
 		// Advanced search dialog
 		case 'tags':
-			$cmd = "search \"((base '" . $dir . "') AND (" . $_SESSION['library_flatlist_filter_str'] . "))\"";
+			$cmd = $flatlist_filter_str;
 			break;
 		// Filter on specific tag containing the string or if string is empty perform an 'any' filter
 		case 'album':
@@ -417,22 +416,37 @@ function getAndFilterFilesFromMpd($sock, $dir, $flatlist_filter, $flatlist_filte
 		case 'work':
 			$tag = empty($flatlist_filter_str) ? 'any' : $flatlist_filter;
 			$str = empty($flatlist_filter_str) ? $flatlist_filter : $flatlist_filter_str;
-			$cmd = "search \"((base '" . $dir . "') AND (" . $tag . " contains '" . $str . "'))\"";
+			$cmd = "($tag contains '$str')";
 			break;
 		// Filter on file path or extension
 		// NOTE: Lossless and Lossy have an additional m4a probe in genLibrary()
 		case 'folder':
 		case 'format':
-			$cmd = "search \"((base '" . $dir . "') AND (file contains '" . $flatlist_filter_str . "'))\"";
+			$cmd = "(file contains '$flatlist_filter_str')";
 			break;
 		case 'lossless':
-			$cmd = "search \"((base '" . $dir . "') AND (file =~ 'm4a$|flac$|aif$|aiff$|wav$|dsf$|dff$'))\"";
+			$cmd = "(file =~ 'm4a$|flac$|aif$|aiff$|wav$|dsf$|dff$')";
 			break;
 		case 'lossy':
-			$cmd = "search \"((base '" . $dir . "') AND (file !~ 'flac$|aif$|aiff$|wav$|dsf$|dff$'))\"";
+			$cmd = "(file !~ 'flac$|aif$|aiff$|wav$|dsf$|dff$')";
 			break;
 	}
 	//workerLog($cmd);
+	return $cmd;
+}
+
+function getAndFilterFilesFromMpd($sock, $dir, $flatlist_filter, $flatlist_filter_str) {
+	$filter = createSearchFilter($flatlist_filter, $flatlist_filter_str);
+	$filterFromSearchParameters = createSearchFilter($_SESSION['library_flatlist_filter'], $_SESSION['library_flatlist_filter_str']);
+
+	$cmd = "search \"((base '" . $dir . "')";
+	if (!empty($filter))
+		$cmd .= " AND $filter";
+	if (!empty($filterFromSearchParameters))
+		$cmd .= " AND $filterFromSearchParameters";
+	$cmd .= ")\"";
+
+	//debugLog("getAndFilterFilesFromMpd: $cmd");
 	sendMpdCmd($sock, $cmd);
 	return readMpdResp($sock);
 }
@@ -921,14 +935,16 @@ function getTrackYear($trackData) {
 }
 
 function clearLibCacheAll() {
-	sysCmd('truncate ' . LIBCACHE_BASE . '_* --size 0');
+	$libCachBase = getCollectionLibcacheBase();
+	sysCmd('truncate ' . $libCachBase . '_* --size 0');
 	cfgdb_update('cfg_system', cfgdb_connect(), 'lib_pos','-1,-1,-1');
 }
 
 function clearLibCacheFiltered() {
-	sysCmd('truncate ' . LIBCACHE_BASE . '_folder.json --size 0');
-	sysCmd('truncate ' . LIBCACHE_BASE . '_format.json --size 0');
-	sysCmd('truncate ' . LIBCACHE_BASE . '_tag.json --size 0');
+	$libCachBase = getCollectionLibcacheBase();
+	sysCmd('truncate ' . $libCachBase . '_folder.json --size 0');
+	sysCmd('truncate ' . $libCachBase . '_format.json --size 0');
+	sysCmd('truncate ' . $libCachBase . '_tag.json --size 0');
 	cfgdb_update('cfg_system', cfgdb_connect(), 'lib_pos','-1,-1,-1');
 }
 

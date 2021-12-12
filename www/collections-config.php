@@ -72,7 +72,7 @@ if (!isset($_GET['cmd'])) {
 		
 		// default collection can't be edited
 		if (empty($collection['id'])) 
-			$_collections .= "<span class='btn btn-large' style='width:240px;background-color:#333;text-align:left;'> " . $icon . " Default</span>";
+			$_collections .= "<span class='btn btn-large' style='width:240px;background-color:#333;text-align:left;'> " . $icon . " " . $collection['title'] . "</span>";
 		else
 			$_collections .= "<a href=\"collections-config.php?cmd=" . COLLECTIONS_ACTION_EDIT . "&id=" . $collection['id'] . "\" class='btn btn-large' style='width:240px;background-color:#333;text-align:left;'> " . $icon . " " . $collection['title'] . "</a>";
 	

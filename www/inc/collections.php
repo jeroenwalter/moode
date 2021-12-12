@@ -130,7 +130,7 @@ function createCollection($title) {
 function createDefaultCollection() {
 	$collection = array();
 	$collection["id"] = '';
-	$collection["title"] = '';
+	$collection["title"] = 'Entire library';
 	$collection["flatlist_filters"] = array();
 	$collection["flatlist_filters"][0] = array();
 	$collection["flatlist_filters"][0]["filter"] = $_SESSION['library_flatlist_filter'];
