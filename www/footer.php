@@ -61,7 +61,7 @@
 		<div id="configure">
 			<ul>
 				<li><a href="lib-config.php" class="btn btn-large"><i class="fas fa-database"></i><br>Library</a></li>
-				<li><a href="collections-config.php" class="btn btn-large"><i class="fas fa-database"></i><br>Collections</a></li>
+				<li><a href="collections-config.php" class="btn btn-large"><i class="fas fa-archive"></i><br>Collections</a></li>
 				<li><a href="snd-config.php" class="btn btn-large"><i class="fas fa-volume-up"></i><br>Audio</a></li>
 				<li><a href="net-config.php" class="btn btn-large"><i class="fas fa-sitemap"></i><br>Network</a></li>
 				<li><a href="sys-config.php" class="btn btn-large"><i class="fas fa-desktop-alt"></i><br>System</a></li>
