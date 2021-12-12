@@ -152,6 +152,7 @@
 					</form>
 					<span aria-label="Reset" id="searchResetLib" type="reset" value="reset"><i class="fal fa-times-circle"></i></span>
 				</button>
+				<button aria-label="Active collection" class="btn menu-separator" href="#selectcollection-modal" data-toggle="modal"><i class="fas fa-archive"></i>$activeCollection</button>
 				<button aria-label="Advanced Search" class="btn adv-search-btn menu-separator hide" href="#dbsearch-modal" data-toggle="modal"><i class="far fa-search"></i> Advanced search</button>
 				<button aria-label="Radio" class="btn radio-view-btn" href="#radio-panel"><i class="fas fa-microphone"></i> Radio<span class="pane"><i class="fal fa-check"></i></span></button>
 				<button aria-label="Folder" class="btn folder-view-btn" href="#library-panel"><i class="fas fa-folder"></i> Folder<span class="pane"><i class="fal fa-check"></i></span></button>
@@ -389,6 +390,32 @@
 	<div class="modal-footer">
 		<button aria-label="Cancel" class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
 		<button aria-label="Submit" class="btn btn-primary" id="db-search-submit" data-dismiss="modal">Submit</button>
+	</div>
+</div>
+
+<!-- SELECT COLLECTION -->
+<div id="selectcollection-modal" class="modal modal-sm hide" tabindex="-1" role="dialog" aria-labelledby="selectcollection-modal-label" aria-hidden="true">
+	<div class="modal-header">
+		<button aria-label="Close" type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+		<h3>Select collection</h3>
+	</div>
+	<div class="modal-body" id="container-selectcollection">
+		<form class="form-horizontal" action="" method="">
+	    	<fieldset>
+				<span class="h5">Select collection</span>
+				<div class="control-group">
+					<label class="control-label" for="collection">Collection</label>
+					<div class="controls">
+						<select id="selectcollection-list" class="input-large" name="selectcollection-list">
+						</select>
+					</div>
+				</div>
+	    	</fieldset>
+		</form>
+	</div>
+	<div class="modal-footer">
+		<button aria-label="Cancel" class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+		<button aria-label="Submit" class="btn btn-primary" id="selectcollection-submit" data-dismiss="modal">Activate</button>
 	</div>
 </div>
 

@@ -75,7 +75,8 @@ function notify(cmd, msg, duration) {
         renderer_turnoff: 'Turning off...',
 		restart: 'Restarting...',
 		shutdown: 'Shutting down...',
-        viewport: 'Viewport'
+        viewport: 'Viewport',
+        activate_collection: 'Activate collection'
     };
 
     if (typeof map[cmd] === undefined) {

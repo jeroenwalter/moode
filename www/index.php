@@ -24,6 +24,9 @@
 require_once dirname(__FILE__) . '/inc/playerlib.php';
 
 playerSession('open', '', '');
+
+$activeCollection = getActiveCollection()["title"];
+
 session_write_close();
 
 $section = basename(__FILE__, '.php');

@@ -888,6 +888,24 @@ jQuery(document).ready(function($) { 'use strict';
 		}
 	});
 
+	$('#selectcollection-modal').on('shown.bs.modal', function() {
+		$.getJSON('command/moode.php?cmd=listcollections', function(result) {
+			var options = $("#selectcollection-list");
+			$.each(result, function(item) {
+				options.append($("<option />").val(this.id).text(this.title));
+			});
+		});
+	});
+
+	$('#selectcollection-submit').click(function(e) {
+		var collectionId = $("#selectcollection-list option:selected").val();
+		$.post('command/moode.php?cmd=activatecollection', {'collection': collectionId});
+        notify('activate_collection', 'Auto-refresh in 2 seconds');
+        setTimeout(function() {
+            location.reload(true);
+        }, 2000);
+	});
+
     // Refresh the station list
 	$('#ra-refresh').click(function(e) {
 		mpdDbCmd('lsinfo_radio');
