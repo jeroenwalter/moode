@@ -3348,13 +3348,11 @@ function storeBackLink($section, $tpl) {
 
 	if ($tpl == 'src-config.html') {
 		$_SESSION['config_back_link'] = '/lib-config.php';
-	}
-
-	if ($tpl == 'collection-config.html') {
+	} 
+	elseif ($tpl == 'collection-config.html') {
 		$_SESSION['config_back_link'] = '/collections-config.php';
 	}
-
-	if ($tpl == 'cdsp-config.html') {
+	elseif ($tpl == 'cdsp-config.html') {
 		if ($referer_link == '/index.php') {
 			$_SESSION['cdsp_from_link'] = '/index.php';
 		}
@@ -3365,10 +3363,10 @@ function storeBackLink($section, $tpl) {
 		//$_SESSION['config_back_link'] = '/snd-config.php';
 		$_SESSION['config_back_link'] = $_SESSION['cdsp_from_link'];
 	}
-	else if (in_array($section, $root_configs)) {
+	elseif (in_array($section, $root_configs)) {
 		$_SESSION['config_back_link'] = '/index.php';
 	}
-	else if (stripos($_SERVER['HTTP_REFERER'], $section) === false) {
+	elseif (stripos($_SERVER['HTTP_REFERER'], $section) === false) {
 		$_SESSION['config_back_link'] = $referer_link;
 	}
 	else {
