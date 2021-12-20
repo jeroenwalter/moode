@@ -891,6 +891,7 @@ jQuery(document).ready(function($) { 'use strict';
 	$('#selectcollection-modal').on('shown.bs.modal', function() {
 		$.getJSON('command/moode.php?cmd=listcollections', function(result) {
 			var options = $("#selectcollection-list");
+			options.empty();
 			$.each(result, function(item) {
 				options.append($("<option />").val(this.id).text(this.title));
 			});
