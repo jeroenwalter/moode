@@ -23,27 +23,59 @@
 
 require_once dirname(__FILE__) . '/inc/collections.php';
 define('COLLECTIONS_ACTION_ADD', 'add');
-define('COLLECTIONS_ACTION_REMOVE', 'remove');
 define('COLLECTIONS_ACTION_REBUILD', 'rebuild');
 define('COLLECTIONS_ACTION_EDIT', 'edit');
 define('COLLECTIONS_ACTION_ACTIVATE', 'activate');
 
 playerSession('open');
 $tpl = "";
-$_collections = "";
+
+$_collectionsHtml = "";
+
+$_editCollectionName = "";
+$_editCollectionId = "";
+
+// collection-config.html POSTS
+
+// remove collection
+if (isset($_POST['delete']) && $_POST['delete'] == 1) {
+	deleteCollection($_POST['collection-id']);
+	unset($_GET['cmd']);
+}
+
+// save source
+if (isset($_POST['save']) && $_POST['save'] == 1) {
+	// validate
+	$collectionId = $_POST['collection-id'];
+	$validationError = "";
+
+	if (isset($_POST['collection-name'])) {
+		$collectionName = trim($_POST['collection-name']);
+		if (empty($collectionName)) {
+			$validationError = "Collection name can't be empty";
+		}
+	}
+
+	if (empty($validationError)) {
+		if (empty($collectionId)) {
+			// add
+			createCollection($collectionName);
+		} else {
+			// edit
+			$collection = getCollection($collectionId);
+			if (!is_null($collection)) {
+				$collection['title'] = $collectionName;
+				saveCollection($collection);
+			}
+		}
+	}
+	
+	unset($_GET['cmd']);
+}
+
 
 if ($_GET['cmd'] == COLLECTIONS_ACTION_ACTIVATE) {
 	activateCollection($_GET['id']);
-	unset($_GET['cmd']);
-}
-
-if ($_GET['cmd'] == COLLECTIONS_ACTION_ADD) {
-	createCollection("New Collection");
-	unset($_GET['cmd']);
-}
-
-if ($_GET['cmd'] == COLLECTIONS_ACTION_REMOVE) {
-	deleteCollection($_GET['id']);
 	unset($_GET['cmd']);
 }
 
@@ -52,52 +84,72 @@ if ($_GET['cmd'] == COLLECTIONS_ACTION_REBUILD) {
 	unset($_GET['cmd']);
 }
 
-if ($_GET['cmd'] == COLLECTIONS_ACTION_EDIT) {
-	unset($_GET['cmd']);
-}
-
-
-
-// COLLECTIONS CONFIG FORM
+// Show all collections
 if (!isset($_GET['cmd'])) {
+	
 	$tpl = "collections-config.html";
 
 	// display list of collections if any
 	$collections = listCollections();
 	$activeCollection = getActiveCollection();
-	$_collections .= "<p>Active collection: " . (empty($activeCollection['id']) ? "-" : $activeCollection['title']) . "</p>";
+	$_collectionsHtml .= "<p>Active collection: " . (empty($activeCollection['id']) ? "-" : $activeCollection['title']) . "</p>";
 	foreach ($collections as $collection) {
-		$icon = ($collection['id'] == $activeCollection['id']) ? "<i class='fas fa-check green sx'></i>" : "<i class='fas fa-times red sx'></i>";
-		$_collections .= "<p>";
+		$icon = ($collection['id'] == $activeCollection['id']) ? "<i class='fas fa-check green sx'></i>" : "<i class='fas sx'></i>";
+		$_collectionsHtml .= "<p>";
 		
 		// default collection can't be edited
 		if (empty($collection['id'])) 
-			$_collections .= "<span class='btn btn-large' style='width:240px;background-color:#333;text-align:left;'> " . $icon . " " . $collection['title'] . "</span>";
+			$_collectionsHtml .= "<span class='btn btn-large' style='width:240px;background-color:#333;text-align:left;'> " . $icon . " " . $collection['title'] . "</span>";
 		else
-			$_collections .= "<a href=\"collections-config.php?cmd=" . COLLECTIONS_ACTION_EDIT . "&id=" . $collection['id'] . "\" class='btn btn-large' style='width:240px;background-color:#333;text-align:left;'> " . $icon . " " . $collection['title'] . "</a>";
+			$_collectionsHtml .= "<a href=\"collections-config.php?cmd=" . COLLECTIONS_ACTION_EDIT . "&id=" . $collection['id'] . "\" class='btn btn-large' style='width:240px;background-color:#333;text-align:left;'> " . $icon . " " . $collection['title'] . "</a>";
 	
-		$_collections .= " <a href=\"collections-config.php?cmd=" . COLLECTIONS_ACTION_ACTIVATE . "&id=" . $collection['id'] ."\"><button class=\"btn btn-medium btn-primary\">Activate</button></a>";
+		$_collectionsHtml .= " <a href=\"collections-config.php?cmd=" . COLLECTIONS_ACTION_ACTIVATE . "&id=" . $collection['id'] ."\"><button class=\"btn btn-medium btn-primary\">Activate</button></a>";
 		
 		
 		// default collection can't be rebuild or removed
 		if (!empty($collection['id'])) {
-			$_collections .= " <a href=\"collections-config.php?cmd=" . COLLECTIONS_ACTION_REBUILD . "&id=" . $collection['id'] ."\"><button class=\"btn btn-medium btn-primary\">Rebuild</button></a>";
-			$_collections .= " <a href=\"collections-config.php?cmd=" . COLLECTIONS_ACTION_REMOVE . "&id=" . $collection['id'] ."\"><button class=\"btn btn-medium btn-primary\">Delete</button></a>";
+			$_collectionsHtml .= " <a href=\"collections-config.php?cmd=" . COLLECTIONS_ACTION_REBUILD . "&id=" . $collection['id'] ."\"><button class=\"btn btn-medium btn-primary\">Rebuild</button></a>";
 		}
 		
-		$_collections .= "</br><ul>";
-		foreach($collection["flatlist_filters"] as $flatlist_filter)
-			$_collections .= "<li style='font-size:12px;'>Filter: '" . $flatlist_filter["filter"] . "' => '" . $flatlist_filter["str"] . "'</li>";
-			$_collections .= "</ul>";
+		$_collectionsHtml .= "</br><ul>";
 
-		$_collections .= "</p>";
+		foreach($collection["flatlist_filters"] as $flatlist_filter)
+			$_collectionsHtml .= "<li style='font-size:12px;'>Filter: '" . $flatlist_filter["filter"] . "' => '" . $flatlist_filter["str"] . "'</li>";
+			$_collectionsHtml .= "</ul>";
+
+		$_collectionsHtml .= "</p>";
 	}
 
 	if (empty($collections))
-		$_collections .= '<p class="btn btn-large" style="width: 240px; background-color: #333;">None configured</p><p></p>';
-} elseif ($_GET['cmd'] == 'edit') {
+		$_collectionsHtml .= '<p class="btn btn-large" style="width: 240px; background-color: #333;">None configured</p><p></p>';
 
+} 
+
+// Add/Edit collection form
+if ($_GET['cmd'] == COLLECTIONS_ACTION_EDIT || $_GET['cmd'] == COLLECTIONS_ACTION_ADD) {
+	
+	$tpl = 'collection-config.html';
+
+	// edit
+	if ($_GET['cmd'] == COLLECTIONS_ACTION_EDIT && isset($_GET['id']) && !empty($_GET['id'])) {
+
+		$_editCollectionId = $_GET['id'];
+		$_editCollection = getCollection($_editCollectionId);
+		if (!is_null($_editCollection)) {
+			$_editCollectionName = $_editCollection['title'];
+		} else {
+			// error, collection not found
+			$tpl = 'collections-config.html';
+		}
+	}
+	// create
+	elseif ($_GET['cmd'] == COLLECTIONS_ACTION_ADD) {
+		$_hide_remove = 'hide';
+		$_editCollectionId = "";
+		$_editCollectionName = "New Collection";
+	}
 }
+
 playerSession('unlock');
 
 $section = basename(__FILE__, '.php');

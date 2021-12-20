@@ -3341,13 +3341,17 @@ function reconfMpdVolume($mixertype) {
 
 // Store back link for configs
 function storeBackLink($section, $tpl) {
-	$root_configs = array('lib-config', 'snd-config', 'net-config', 'sys-config');
+	$root_configs = array('lib-config', 'collections-config', 'snd-config', 'net-config', 'sys-config');
 	$referer_link = substr($_SERVER['HTTP_REFERER'], strrpos($_SERVER['HTTP_REFERER'], '/'));
 
 	session_start();
 
 	if ($tpl == 'src-config.html') {
 		$_SESSION['config_back_link'] = '/lib-config.php';
+	}
+
+	if ($tpl == 'collection-config.html') {
+		$_SESSION['config_back_link'] = '/collections-config.php';
 	}
 
 	if ($tpl == 'cdsp-config.html') {

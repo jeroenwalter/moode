@@ -1,0 +1,61 @@
+<!--
+/**
+ * moOde audio player (C) 2014 Tim Curtis
+ * http://moodeaudio.org
+ *
+ * This Program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3, or (at your option)
+ * any later version.
+ *
+ * This Program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+-->
+<div class="container">
+	<div class="container2">
+	<h1 class="collection-config">Collection</h1>
+
+	<form class="form-horizontal" action="collections-config.php" method="post">
+		<input type="hidden" name="collection-id" value="$_editCollectionId">
+		<legend class="legend-configs">
+			<button class="btn btn-medium btn-primary btn-submit" type="submit" name="save" value="1">Save</button>
+			<a href="#remove-collection" data-toggle="modal" class="$_hide_remove"><button class="btn btn-medium btn-primary">Remove</button></a>
+		</legend>
+
+		<fieldset>
+			<legend>Collection</legend>
+			<div class="control-group" >
+				<label class="control-label" for="collection-name">Name</label>
+				<div class="controls">
+					<input name="collection-name" class="input-large" type="text" value="$_editCollectionName">
+				</div>
+			</div>
+		</fieldset>
+	</form>
+</div>
+</div>
+
+<form class="form-horizontal" action="collections-config.php" method="post">
+	<input type="hidden" name="collection-id" value="$_editCollectionId">
+	<div id="remove-collection" class="modal modal-sm hide" tabindex="-1" role="dialog" aria-labelledby="remove-collection-label" aria-hidden="true">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+		</div>
+		<div class="modal-body">
+			<h6>Remove Collection: $_editCollectionName?</h6>
+		</div>
+		<div class="modal-footer">
+			<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+			<button class="btn btn-primary btn-submit" type="submit" name="delete" value="1">Yes</button>
+		</div>
+	</div>
+</form>
+
+

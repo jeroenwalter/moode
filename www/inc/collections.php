@@ -97,22 +97,7 @@ function createCollection($title) {
 	$collectionDir = getCollectionDir($collectionId);
 
 	mkdir($collectionDir, 0777, false);
-
-	$collection = array();
-	$collection["id"] = $collectionId;
-	$collection["title"] = $title;
-	$collection["flatlist_filters"] = array();
-	$collection["flatlist_filters"][0] = array();
-	$collection["flatlist_filters"][0]["filter"] = $_SESSION['library_flatlist_filter'];
-	$collection["flatlist_filters"][0]["str"] = $_SESSION['library_flatlist_filter_str'];
 	
-	$json = json_encode($collection);
-
-	if (false === file_put_contents($collectionDir . COLLECTIONS_PARAMETERS, $json)) {
-		debugLog('createCollection(): error: file create failed: ' . $collectionDir . COLLECTIONS_PARAMETERS);
-		return 'error: file create failed: ' . $collectionDir . COLLECTIONS_PARAMETERS;
-	}
-
 	$libcache_base = $collectionDir . COLLECTIONS_LIBCACHE_BASE;
 	sysCmd('touch ' . $libcache_base . '_all.json');
 	sysCmd('touch ' . $libcache_base . '_folder.json');
@@ -121,8 +106,41 @@ function createCollection($title) {
 	sysCmd('touch ' . $libcache_base . '_lossless.json');
 	sysCmd('touch ' . $libcache_base . '_lossy.json');
 	sysCmd('touch ' . $libcache_base . '_tag.json');
+	
+	$collection = array();
+	$collection["id"] = $collectionId;
+	$collection["title"] = $title;
+	$collection["flatlist_filters"] = array();
+	$collection["flatlist_filters"][0] = array();
+	$collection["flatlist_filters"][0]["filter"] = $_SESSION['library_flatlist_filter'];
+	$collection["flatlist_filters"][0]["str"] = $_SESSION['library_flatlist_filter_str'];
+	
+	$result = saveCollection($collection);
+	if ('OK' != $result) {
+		return $result;
+	}
 
 	sysCmd('chmod -R 0777 ' . $collectionDir . '*');
+
+	return 'OK';
+}
+
+function saveCollection($collection) {
+	debugLog("saveCollection(): " . $collection["id"]);
+
+	$collectionDir = getCollectionDir($collection["id"]);
+	if (!file_exists($collectionDir)) {
+		return 'error: collection directory not found: ' . $collectionDir;
+	}
+	
+	$json = json_encode($collection);
+
+	if (false === file_put_contents($collectionDir . COLLECTIONS_PARAMETERS, $json)) {
+		debugLog('saveCollection(): error: file create failed: ' . $collectionDir . COLLECTIONS_PARAMETERS);
+		return 'error: file save failed: ' . $collectionDir . COLLECTIONS_PARAMETERS;
+	}
+
+	collectionClearLibCacheAll($collection["id"]);
 
 	return 'OK';
 }
