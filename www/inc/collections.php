@@ -122,7 +122,7 @@ function createCollection($title) {
 
 	sysCmd('chmod -R 0777 ' . $collectionDir . '*');
 
-	return 'OK';
+	return $collectionId;
 }
 
 function saveCollection($collection) {

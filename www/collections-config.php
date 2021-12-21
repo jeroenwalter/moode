@@ -56,17 +56,33 @@ if (isset($_POST['save']) && $_POST['save'] == 1) {
 		}
 	}
 
+	
+
 	if (empty($validationError)) {
+
 		if (empty($collectionId)) {
 			// add
-			createCollection($collectionName);
-		} else {
-			// edit
-			$collection = getCollection($collectionId);
-			if (!is_null($collection)) {
-				$collection['title'] = $collectionName;
-				saveCollection($collection);
+			$collectionId = createCollection($collectionName);
+		} 
+			
+		// edit existing or newly created
+		$collection = getCollection($collectionId);
+		if (!is_null($collection)) {
+			$collection['title'] = $collectionName;
+			$collection["flatlist_filters"] = array();
+		
+			if (isset($_POST['collection-filter']) && is_array($_POST['collection-filter'])) {
+				foreach($_POST['collection-filter'] as $index=>$filter) {
+					if (!empty($filter) && !empty($_POST['collection-filter-str'][$index])) {
+						$newFilter = array();
+						$newFilter["filter"] = $filter;
+						$newFilter["str"] = $_POST['collection-filter-str'][$index];
+						$collection["flatlist_filters"][] = $newFilter;
+					}
+				}
 			}
+
+			saveCollection($collection);
 		}
 	}
 	
@@ -111,12 +127,6 @@ if (!isset($_GET['cmd'])) {
 			$_collectionsHtml .= " <a href=\"collections-config.php?cmd=" . COLLECTIONS_ACTION_REBUILD . "&id=" . $collection['id'] ."\"><button class=\"btn btn-medium btn-primary\">Rebuild</button></a>";
 		}
 		
-		$_collectionsHtml .= "</br><ul>";
-
-		foreach($collection["flatlist_filters"] as $flatlist_filter)
-			$_collectionsHtml .= "<li style='font-size:12px;'>Filter: '" . $flatlist_filter["filter"] . "' => '" . $flatlist_filter["str"] . "'</li>";
-			$_collectionsHtml .= "</ul>";
-
 		$_collectionsHtml .= "</p>";
 	}
 
@@ -129,6 +139,8 @@ if (!isset($_GET['cmd'])) {
 if ($_GET['cmd'] == COLLECTIONS_ACTION_EDIT || $_GET['cmd'] == COLLECTIONS_ACTION_ADD) {
 	
 	$tpl = 'collection-config.html';
+	$_collectionFiltersHtml = "";
+	$filter_index = 0;
 
 	// edit
 	if ($_GET['cmd'] == COLLECTIONS_ACTION_EDIT && isset($_GET['id']) && !empty($_GET['id'])) {
@@ -137,6 +149,11 @@ if ($_GET['cmd'] == COLLECTIONS_ACTION_EDIT || $_GET['cmd'] == COLLECTIONS_ACTIO
 		$_editCollection = getCollection($_editCollectionId);
 		if (!is_null($_editCollection)) {
 			$_editCollectionName = $_editCollection['title'];
+
+			foreach($_editCollection["flatlist_filters"] as $flatlist_filter) {
+				$_collectionFiltersHtml .= GetExistingFilterControls($filter_index, $flatlist_filter["filter"], $flatlist_filter["str"], true);
+				$filter_index++;
+			}
 		} else {
 			// error, collection not found
 			$tpl = 'collections-config.html';
@@ -148,6 +165,45 @@ if ($_GET['cmd'] == COLLECTIONS_ACTION_EDIT || $_GET['cmd'] == COLLECTIONS_ACTIO
 		$_editCollectionId = "";
 		$_editCollectionName = "New Collection";
 	}
+
+	$_collectionFiltersHtml .= GetAddFilterControls();
+}
+
+function GetFilterOption($optionText, $optionValue, $selectedValue)
+{
+	return '<option value="' . $optionValue. '" '. ($optionValue == $selectedValue ? 'selected' : '' ) .'>'. $optionText .'</option>';
+}
+
+function GetFilterOptions($selectedValue)
+{
+	$options = "";
+	$options .= GetFilterOption("-- Raw MPD Search --", "tags", $selectedValue);
+	$options .= GetFilterOption("-- Any --", "any", $selectedValue);
+	$options .= GetFilterOption("Album", "album", $selectedValue);
+	$options .= GetFilterOption("Album Artist", "albumartist", $selectedValue);
+	$options .= GetFilterOption("Artist", "artist", $selectedValue);
+	$options .= GetFilterOption("Folder/File name", "folder", $selectedValue);
+	$options .= GetFilterOption("Genre", "genre", $selectedValue);
+	$options .= GetFilterOption("Title", "title", $selectedValue);
+	return $options;
+}
+
+function GetExistingFilterControls($filterIndex, $selectedFilter, $filterContent) {
+	$controls = '<div class="control-group" id="collection-filter-controls-' . $filterIndex . '">';
+	$controls .= '<select id="collection-filter-'.$filterIndex.'" name="collection-filter['.$filterIndex.']" class="input-large">';
+	$controls .= GetFilterOptions($selectedFilter);
+	$controls .= '</select>';
+	$controls .= '<input class="input-large" type="text" name="collection-filter-str['.$filterIndex.']" value="'. $filterContent .'">';
+	$controls .= '<a class="collection-remove-filter" data-collection-filter="'.$filterIndex.'" href="#notarget"><button class="btn btn-small btn-primary">Remove</button></a>';
+	$controls .= '</div>';
+	return $controls;
+}
+
+function GetAddFilterControls() {
+	$controls = '<div class="control-group" id="collection-filter-controls-add">';
+	$controls .= '<a class="collection-add-filter" href="#notarget"><button class="btn btn-small btn-primary">Add</button></a>';
+	$controls .= '</div>';
+	return $controls;
 }
 
 playerSession('unlock');

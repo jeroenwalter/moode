@@ -311,4 +311,64 @@ jQuery(document).ready(function($){ 'use strict';
 			$(spanId).addClass('hide');
 		}
     });
+
+	/////////////////////////////////////////////////////////////////
+	// Collections
+
+	var collectionNextFilterIndex = 10000;
+	
+    $('.collection-add-filter').on("click", function(e) {
+		var controls = GetExistingFilterControls(collectionNextFilterIndex, "", "");
+
+		$(controls).insertBefore($("#collection-filter-controls-add"));
+
+		// TODO: fix this so selecting an option won't navigate to 'undefined'......
+		//$(`#collection-filter-${collectionNextFilterIndex}`).selectpicker();
+		
+		collectionNextFilterIndex++;
+
+		BindCollectionFilterRemoveButtons();
+    });
+
+	function BindCollectionFilterRemoveButtons(){
+		$('.collection-remove-filter').off("click");
+		$('.collection-remove-filter').on("click", function(e) {
+			var filterIndex = $(this).data('collection-filter');
+			$(`#collection-filter-controls-${filterIndex}`).remove();
+		});
+	}
+
+	BindCollectionFilterRemoveButtons();
+
+	function GetFilterOption(optionText, optionValue, selectedValue)
+	{
+		return `<option value="${optionValue}" ${optionValue == selectedValue ? 'selected' : ''}>${optionText}</option>`;
+	}
+
+	function GetFilterOptions(selectedValue)
+	{
+		var options = "";
+		options += GetFilterOption("-- Raw MPD Search --", "tags", selectedValue);
+		options += GetFilterOption("-- Any --", "any", selectedValue);
+		options += GetFilterOption("Album", "album", selectedValue);
+		options += GetFilterOption("Album Artist", "albumartist", selectedValue);
+		options += GetFilterOption("Artist", "artist", selectedValue);
+		options += GetFilterOption("Folder/File name", "folder", selectedValue);
+		options += GetFilterOption("Genre", "genre", selectedValue);
+		options += GetFilterOption("Title", "title", selectedValue);
+		return options;
+	}
+
+	function GetExistingFilterControls(filterIndex, selectedFilter, filterContent) {
+		var controls = `<div class="control-group" id="collection-filter-controls-${filterIndex}">`;
+		controls += `<select id="collection-filter-${filterIndex}" name="collection-filter[${filterIndex}]" class="input-large">`;
+		controls += GetFilterOptions(selectedFilter);
+		controls += '</select>';
+		controls += `<input class="input-large" type="text" name="collection-filter-str[${filterIndex}]" value="${filterContent}">`;
+		controls += `<a class="collection-remove-filter" data-collection-filter="${filterIndex}" href="#notarget"><button class="btn btn-small btn-primary">Remove</button></a>`;
+		controls += '</div>';
+		return controls;
+	}
+	// Collections
+	/////////////////////////////////////////////////////////////////
 });
