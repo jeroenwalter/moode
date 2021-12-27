@@ -1,5 +1,5 @@
 --
--- File generated with SQLiteStudio v3.1.0 on Thu Nov 25 11:37:00 2021
+-- File generated with SQLiteStudio v3.1.0 on Mon Dec 20 18:36:15 2021
 --
 -- Text encoding used: UTF-8
 --
@@ -200,7 +200,7 @@ INSERT INTO cfg_radio (id, station, name, type, logo, genre, broadcaster, langua
 INSERT INTO cfg_radio (id, station, name, type, logo, genre, broadcaster, language, country, region, bitrate, format, geo_fenced, home_page, reserved2) VALUES (190, 'https://live-cdn.sr.se/pool2/p2musik/p2musik.isml/p2musik-audio=192000.m3u8', 'Swedish Classic Radio', 'r', 'local', 'Classical, Contemporary, Jazz, Folk', 'Sveriges Radio', 'Dutch', 'Netherlands', 'Europe', '192', 'MP3', 'No', '', '');
 INSERT INTO cfg_radio (id, station, name, type, logo, genre, broadcaster, language, country, region, bitrate, format, geo_fenced, home_page, reserved2) VALUES (191, 'http://158.69.74.203:80/', 'SwissGroove', 'r', 'local', 'Jazz, Funk, Soul, World, Latin, Lounge, Nu Grooves', 'SwissGroove', 'English', 'Switzerland', 'Europe', '128', 'MP3', 'No', '', '');
 INSERT INTO cfg_radio (id, station, name, type, logo, genre, broadcaster, language, country, region, bitrate, format, geo_fenced, home_page, reserved2) VALUES (192, 'http://swr-swr2-live.cast.addradio.de/swr/swr2/live/mp3/256/stream.mp3', 'SWR 2', 'r', 'local', 'Classical, Jazz', 'Südwestdeutscher Rundfunk', 'German', 'Germany', 'Europe', '256', 'MP3', 'No', '', '');
-INSERT INTO cfg_radio (id, station, name, type, logo, genre, broadcaster, language, country, region, bitrate, format, geo_fenced, home_page, reserved2) VALUES (193, 'http://west-aac-64.streamthejazzgroove.com', 'The Jazz Groove', 'r', 'local', 'Jazz', 'The Jazz Groove', 'English', 'United States', 'North America', '64', 'AAC', 'No', '', '');
+INSERT INTO cfg_radio (id, station, name, type, logo, genre, broadcaster, language, country, region, bitrate, format, geo_fenced, home_page, reserved2) VALUES (193, 'http://west-aac-64.streamthejazzgroove.com/stream', 'The Jazz Groove', 'r', 'local', 'Jazz', 'The Jazz Groove', 'English', 'United States', 'North America', '64', 'AAC', 'No', '', '');
 INSERT INTO cfg_radio (id, station, name, type, logo, genre, broadcaster, language, country, region, bitrate, format, geo_fenced, home_page, reserved2) VALUES (194, 'http://live-radio01.mediahubaustralia.com/2TJW/mp3/', 'Triple J', 'r', 'local', 'Alternative', 'ABC', 'English', 'Australia', 'Asia', '96', 'MP3', 'No', '', '');
 INSERT INTO cfg_radio (id, station, name, type, logo, genre, broadcaster, language, country, region, bitrate, format, geo_fenced, home_page, reserved2) VALUES (195, 'http://live-radio01.mediahubaustralia.com/UNEW/mp3/', 'Triple J Unearthed', 'r', 'local', 'Alternative, Indie', 'ABC', 'English', 'Australia', 'Asia', '96', 'MP3', 'No', '', '');
 INSERT INTO cfg_radio (id, station, name, type, logo, genre, broadcaster, language, country, region, bitrate, format, geo_fenced, home_page, reserved2) VALUES (196, 'https://ice.cr1.streamzilla.xlcdn.com:8000/sz=RCOLiveWebradio=mp3-192', 'RCO Live', 'r', 'local', 'Classical', 'RCO', 'Dutch', 'Netherlands', 'Europe', '192', 'MP3', 'No', '', '');
@@ -704,11 +704,11 @@ INSERT INTO cfg_hash (id, param, value, "action") VALUES (6, '/etc/php/7.3/fpm/p
 INSERT INTO cfg_hash (id, param, value, "action") VALUES (7, '/etc/php/7.3/mods-available/opcache.ini', '561a03862bb902fa39ca0b6358eaf320', 'exit');
 INSERT INTO cfg_hash (id, param, value, "action") VALUES (8, '/tmp/cfg_audiodev.sql', 'ad8fa459c4044dc2704fcf898be75f26', 'exit');
 INSERT INTO cfg_hash (id, param, value, "action") VALUES (9, '/var/www/command/worker.php', '8eeedf652d69acf1ae6bbd6ad9cc6f8a', 'warning');
-INSERT INTO cfg_hash (id, param, value, "action") VALUES (10, '/var/www/inc/playerlib.php', 'a2f4e41c5babca19d3a1ca5f09c068a4', 'warning');
+INSERT INTO cfg_hash (id, param, value, "action") VALUES (10, '/var/www/inc/playerlib.php', '0f720f2230b9e25be60a60d2f82143ec', 'warning');
 INSERT INTO cfg_hash (id, param, value, "action") VALUES (11, '/var/www/css/main.min.css', '9a6890a45b40aef84c05a95d6a4439c6', 'warning');
 INSERT INTO cfg_hash (id, param, value, "action") VALUES (12, '/var/www/js/config.min.js', '9fd16bc1973daa9eab7d464e8b0de85f', 'warning');
-INSERT INTO cfg_hash (id, param, value, "action") VALUES (13, '/var/www/js/lib.min.js', '80ab3662a5881531bcefd6d91e44156f', 'warning');
-INSERT INTO cfg_hash (id, param, value, "action") VALUES (14, '/var/www/js/main.min.js', '7ea9b3e317c4638f5d294f5587f05b19', 'warning');
+INSERT INTO cfg_hash (id, param, value, "action") VALUES (13, '/var/www/js/lib.min.js', 'b70bf024cdf2f10da19fcd5453fef8e5', 'warning');
+INSERT INTO cfg_hash (id, param, value, "action") VALUES (14, '/var/www/js/main.min.js', '68417f55a120c14bd7cef57d337f32f8', 'warning');
 INSERT INTO cfg_hash (id, param, value, "action") VALUES (15, '/etc/rc.local', '6c7a7e39b81ea1ac97d0615a20616110', 'ignore');
 
 COMMIT TRANSACTION;
