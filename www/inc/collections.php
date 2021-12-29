@@ -21,26 +21,11 @@
  *
  */
 
-define('COLLECTIONS_DIR', '/var/local/www/collections/');
-define('COLLECTIONS_LIBCACHE_BASE', 'libcache');
-define('COLLECTIONS_PARAMETERS', 'parameters.json');
-define('COLLECTIONS_ACTIVE_COLLECTION_ID', 'library_collection_id');
+define('COLLECTIONS_ACTIVE_VIEW', 'library_flatlist_view');
+define('COLLECTIONS_ALL_VIEW_ID', 1);
 
 require_once dirname(__FILE__) . '/playerlib.php';
 
-// TODO: Why not store the collection parameters in SQL?
-
-/**
- * Ultimately setting up the collections should be added to the moode installer instead of calling this method from worker.php
- */
-function setupCollections() {
-	workerLog('worker: Setup collections');
-
-	mkdir(COLLECTIONS_DIR, 0777, false);
-	
-	$dbh = cfgdb_connect();
-	sdbquery("INSERT INTO cfg_system (param, value) SELECT '" . COLLECTIONS_ACTIVE_COLLECTION_ID . "', '' WHERE NOT EXISTS(SELECT 1 FROM cfg_system WHERE param = '" . COLLECTIONS_ACTIVE_COLLECTION_ID ."');", $dbh);
-}
 
 function handleCollectionCommand() {
 	$handled = false;
@@ -74,154 +59,158 @@ function handleCollectionCommand() {
 	return $handled;
 }
 
-function getCollectionLibcacheBase() {
-	$activeCollectionId = getActiveCollectionId();
-	return is_null($activeCollectionId) 
-		? LIBCACHE_BASE
-		: COLLECTIONS_DIR . $activeCollectionId . "/" . COLLECTIONS_LIBCACHE_BASE;
-}
-
-function getCollectionDir($collectionId) {
-	return COLLECTIONS_DIR . $collectionId . '/';
-}
-
-function createCollection($title) {
-	if (is_null($title) || empty(trim($title))) {
-		return 'Error: empty collection name';
+function createCollection(string $name) : int {
+	$name = trim($name ?? "");
+	if (empty($name)) {
+		debugLog("createView: Error: empty view name");
+		return NULL;
 	}
 
-	debugLog('collection: Creating collection ' . $title);
+	debugLog("createView: Creating view '$name'");
 	
-	// For now use a unique id for the folder name instead of creating a valid filename from $name
-	$collectionId = uniqid('collection-', false);
-	$collectionDir = getCollectionDir($collectionId);
+	$dbh = cfgdb_connect();
+	$stmt = $dbh->prepare('INSERT INTO cfg_view (name) VALUES(:name)');
+	$stmt->execute([ 'name' => $name ]);
+	
+	$viewId = $dbh->lastInsertId();
+	
+	sysCmd('touch ' . LIBCACHE_BASE . '_view_' . $viewId . '.json');
 
-	mkdir($collectionDir, 0777, false);
-	
-	$libcache_base = $collectionDir . COLLECTIONS_LIBCACHE_BASE;
-	sysCmd('touch ' . $libcache_base . '_all.json');
-	sysCmd('touch ' . $libcache_base . '_folder.json');
-	sysCmd('touch ' . $libcache_base . '_format.json');
-	sysCmd('touch ' . $libcache_base . '_hdonly.json');
-	sysCmd('touch ' . $libcache_base . '_lossless.json');
-	sysCmd('touch ' . $libcache_base . '_lossy.json');
-	sysCmd('touch ' . $libcache_base . '_tag.json');
-	
-	$collection = array();
-	$collection["id"] = $collectionId;
-	$collection["title"] = $title;
-	$collection["flatlist_filters"] = array();
-	$collection["flatlist_filters"][0] = array();
-	$collection["flatlist_filters"][0]["filter"] = $_SESSION['library_flatlist_filter'];
-	$collection["flatlist_filters"][0]["str"] = $_SESSION['library_flatlist_filter_str'];
-	
-	$result = saveCollection($collection);
-	if ('OK' != $result) {
-		return $result;
-	}
+	debugLog("createView: View created : $viewId, '$name'");
 
-	sysCmd('chmod -R 0777 ' . $collectionDir . '*');
-
-	return $collectionId;
+	return $viewId;
 }
 
-function saveCollection($collection) {
-	debugLog("saveCollection(): " . $collection["id"]);
+function saveCollection(array $view) : bool {
+	$viewId = (int)$view["id"];
+	debugLog("saveCollection(): " . $viewId);
 
-	$collectionDir = getCollectionDir($collection["id"]);
-	if (!file_exists($collectionDir)) {
-		return 'error: collection directory not found: ' . $collectionDir;
+	$currentView = getCollection($viewId);
+	if (is_null($currentView)) {
+		debugLog("saveCollection: view not found: ". $viewId);
+		return false;
 	}
 	
-	$json = json_encode($collection);
-
-	if (false === file_put_contents($collectionDir . COLLECTIONS_PARAMETERS, $json)) {
-		debugLog('saveCollection(): error: file create failed: ' . $collectionDir . COLLECTIONS_PARAMETERS);
-		return 'error: file save failed: ' . $collectionDir . COLLECTIONS_PARAMETERS;
+	$name = trim((string)$view["name"] ?? "");
+	if (empty($name)) {
+		debugLog("saveCollection: Error: empty view name");
+		return false;
 	}
-
-	collectionClearLibCacheAll($collection["id"]);
-
-	return 'OK';
-}
-
-function createDefaultCollection() {
-	$collection = array();
-	$collection["id"] = '';
-	$collection["title"] = 'Entire library';
-	$collection["flatlist_filters"] = array();
-	$collection["flatlist_filters"][0] = array();
-	$collection["flatlist_filters"][0]["filter"] = $_SESSION['library_flatlist_filter'];
-	$collection["flatlist_filters"][0]["str"] = $_SESSION['library_flatlist_filter_str'];
-	return $collection;
-}
-
-function deleteCollection($collectionId) {
-	debugLog('collection: Deleting collection ' . $collectionId);
-
-	if (empty(getCollection($collectionId))) {
-		return "Collection not found";
+	
+	if (!is_array($view["flatlist_filters"])) {
+		debugLog("saveCollection: flatlist_filters not valid");
+		return false;
 	}
-
-	if (getActiveCollectionId() == $collectionId) {
-		activateCollection('');
-	}
-
-	sysCmd('rm -rf ' . COLLECTIONS_DIR . $collectionId);
-
-	return "OK";
-}
-
-function listCollections() {
-	$retval = array();
-	array_push($retval, createDefaultCollection());
-	$iterator = new DirectoryIterator(COLLECTIONS_DIR);
-	foreach ($iterator as $fileinfo) {
-    	if (!$fileinfo->isDot() && $fileinfo->isDir()) {
-			$collection = getCollection($fileinfo->getFilename());
-			if (!is_null($collection))
-				array_push($retval, $collection);
-		}
-    }
-
-	return $retval;
-}
-
-function getCollection($collectionId) {
-	debugLog("getCollection: Get collection $collectionId");
-
-	$collectionFile = COLLECTIONS_DIR . $collectionId . '/' . COLLECTIONS_PARAMETERS;
-	debugLog("getCollection: collectionFile $collectionFile");
-
-	if (file_exists($collectionFile))
-		return json_decode(file_get_contents($collectionFile), true);	
 		
-	return NULL;
+	// Update name
+	$dbh = cfgdb_connect();
+	$stmt = $dbh->prepare('UPDATE cfg_view SET name=:name WHERE id=:id');
+	$stmt->execute([ 'name' => $name, 'id' => $viewId ]);
+	
+	// Create new filters
+	// Remove deleted filters
+	// Update existing filters
+	// For now, just replace all filters....
+	$stmt = $dbh->prepare('DELETE FROM cfg_view_filter WHERE view_id=:view_id');
+	$stmt->execute([ 'view_id' => $viewId ]);
+	
+	foreach($view["flatlist_filters"] as $filter) {
+		$stmt = $dbh->prepare('INSERT INTO cfg_view_filter (filter, str, view_id) VALUES (:filter, :str, :view_id)');
+		$stmt->execute([ 'filter' => $filter["filter"], 'str' => $filter["str"], 'view_id' => $viewId ]);
+	}
+	
+	return true;
 }
 
-function getActiveCollectionId() {
-	if (!empty($_SESSION[COLLECTIONS_ACTIVE_COLLECTION_ID]))
-		return $_SESSION[COLLECTIONS_ACTIVE_COLLECTION_ID];
-
-	return NULL;
+function deleteCollection(int $viewId) : bool {
+	debugLog('deleteCollection: Deleting collection ' . $viewId);
+	if ($viewId == 1) {
+		debugLog('deleteCollection: not allowed to delete the default view');
+		return false;
+	}
+		
+	$dbh = cfgdb_connect();
+	$stmt = $dbh->prepare('DELETE FROM cfg_view WHERE cfg_view.id = :viewId');
+	$stmt->execute([ 'viewId' => $viewId ]);
+	
+	return true;
 }
 
-function getActiveCollection() {
-	if (is_null(getActiveCollectionId()))
-		return createDefaultCollection();
+function listCollections() : array {
+	$views = array();
+	$dbh = cfgdb_connect();
+	$rows = sdbquery("SELECT cfg_view.id, cfg_view.name FROM cfg_view", $dbh);
+
+	if (!is_array($rows)) {
+		debugLog("listCollections: failed to get views");
+		return array();
+	}
+
+	foreach($rows as $row) {
+		$view = array();
+		$view["id"] = $row["id"];
+		$view["name"] = $row["name"];
+		array_push($views, $view);
+	}
+
+	return $views;
+}
+
+function getCollection(int $viewId) : array {
+	debugLog("getCollection: Get collection $viewId");
+	$dbh = cfgdb_connect();
+
+	$viewFilters = sdbquery(
+		"SELECT cfg_view.name, cfg_view_filter.id as filter_id, cfg_view_filter.filter, cfg_view_filter.str
+		FROM cfg_view 
+		LEFT JOIN cfg_view_filter 
+		ON cfg_view.id = cfg_view_filter.view_id 
+		WHERE cfg_view.id = $viewId", 
+		$dbh);
+
+	if (!is_array($viewFilters)) {
+		debugLog("getCollection: failed to get view for view $viewId");
+		return NULL;
+	}
+
+	$view = array();
+	$view["id"] = $viewId;
+	$view["name"] = $viewFilters[0]["name"];
+	$view["flatlist_filters"] = array();
+	
+	if (!is_null($viewFilters[0]["filter_id"])) {
+		foreach($viewFilters as $index=>$filter) {
+			$view["flatlist_filters"][$index] = array();
+			$view["flatlist_filters"][$index]["id"] = $filter["filter_id"];
+			$view["flatlist_filters"][$index]["filter"] = $filter["filter"];
+			$view["flatlist_filters"][$index]["str"] = $filter["str"];
+		}
+	}
+		
+	return $view;
+}
+
+function getActiveCollectionId() : int {
+	if (!empty($_SESSION[COLLECTIONS_ACTIVE_VIEW]))
+		return (int)$_SESSION[COLLECTIONS_ACTIVE_VIEW];
+
+	return COLLECTIONS_ALL_VIEW_ID;
+}
+
+function getActiveCollection() : array {
 	return getCollection(getActiveCollectionId());
 }
 
-function activateCollection($collectionId) {
+function activateCollection(int $collectionId) {
 	debugLog("activateCollection: Activating collection $collectionId");
 
-	if (!empty($collectionId) && is_null(getCollection($collectionId))) {
+	if (is_null(getCollection($collectionId))) {
 		debugLog("activateCollection: Collection not found: $collectionId");
 		return "Error: not found";
 	}
 
 	playerSession('open');
-	playerSession('write', COLLECTIONS_ACTIVE_COLLECTION_ID, $collectionId);
+	playerSession('write', COLLECTIONS_ACTIVE_VIEW, $collectionId);
 	playerSession('unlock');
 
 	// TODO: replace with better method:
@@ -231,7 +220,7 @@ function activateCollection($collectionId) {
 }
 
 
-function collectionGetFilesAndMetadataFromMPD($sock, $dirs) {
+function collectionGetFilesAndMetadataFromMPD($sock, $dirs) : string {
 	$collection = getActiveCollection();
 
 	$resp = '';
@@ -259,18 +248,7 @@ function collectionRebuild($collectionId) {
 	return "OK";
 }
 
-function collectionClearLibCacheAll($collectionId) {
-	$collectionDir = getCollectionDir($collectionId);
-	$libcache_base = $collectionDir . COLLECTIONS_LIBCACHE_BASE;
-	sysCmd('truncate ' . $libcache_base . '_* --size 0');
-	//cfgdb_update('cfg_system', cfgdb_connect(), 'lib_pos','-1,-1,-1');
-}
-
-function collectionClearLibCacheFiltered($collectionId) {
-	$collectionDir = getCollectionDir($collectionId);
-	$libcache_base = $collectionDir . COLLECTIONS_LIBCACHE_BASE;
-	sysCmd('truncate ' . $libcache_base . '_folder.json --size 0');
-	sysCmd('truncate ' . $libcache_base . '_format.json --size 0');
-	sysCmd('truncate ' . $libcache_base . '_tag.json --size 0');
+function collectionClearLibCacheAll(int $viewId) : void {
+	sysCmd('truncate ' . LIBCACHE_BASE . '_view_' . $viewId . '.json --size 0');
 	//cfgdb_update('cfg_system', cfgdb_connect(), 'lib_pos','-1,-1,-1');
 }

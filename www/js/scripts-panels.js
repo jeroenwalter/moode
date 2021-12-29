@@ -893,7 +893,7 @@ jQuery(document).ready(function($) { 'use strict';
 			var options = $("#selectcollection-list");
 			options.empty();
 			$.each(result, function(item) {
-				options.append($("<option />").val(this.id).text(this.title));
+				options.append($("<option />").val(this.id).text(this.name));
 			});
 		});
 	});

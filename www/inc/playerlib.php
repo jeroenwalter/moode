@@ -703,7 +703,11 @@ function genLibrary($flat) {
 function libcache_file() {
 	switch ($_SESSION['library_flatlist_filter']) {
 		case 'full_lib':
-			$suffix = '_all.json';
+			$activeView = getActiveCollectionId();
+			if ($activeView == COLLECTIONS_ALL_VIEW_ID)
+				$suffix = '_all.json';
+			else
+				$suffix = "_view_$activeView.json";
 			break;
 		case 'folder':
 		case 'format':
@@ -730,7 +734,7 @@ function libcache_file() {
 			break;
 	}
 
-	return getCollectionLibcacheBase() . $suffix;
+	return LIBCACHE_BASE . $suffix;
 }
 
 function json_error_message() {
@@ -935,16 +939,14 @@ function getTrackYear($trackData) {
 }
 
 function clearLibCacheAll() {
-	$libCachBase = getCollectionLibcacheBase();
-	sysCmd('truncate ' . $libCachBase . '_* --size 0');
+	sysCmd('truncate ' . LIBCACHE_BASE . '_* --size 0');
 	cfgdb_update('cfg_system', cfgdb_connect(), 'lib_pos','-1,-1,-1');
 }
 
 function clearLibCacheFiltered() {
-	$libCachBase = getCollectionLibcacheBase();
-	sysCmd('truncate ' . $libCachBase . '_folder.json --size 0');
-	sysCmd('truncate ' . $libCachBase . '_format.json --size 0');
-	sysCmd('truncate ' . $libCachBase . '_tag.json --size 0');
+	sysCmd('truncate ' . LIBCACHE_BASE . '_folder.json --size 0');
+	sysCmd('truncate ' . LIBCACHE_BASE . '_format.json --size 0');
+	sysCmd('truncate ' . LIBCACHE_BASE . '_tag.json --size 0');
 	cfgdb_update('cfg_system', cfgdb_connect(), 'lib_pos','-1,-1,-1');
 }
 
@@ -1805,6 +1807,8 @@ function phpSession($action, $param = '', $value = '') {
 // Database management
 function cfgdb_connect() {
 	if ($dbh = new PDO(SQLDB)) {
+		// activate use of foreign key constraints
+		$dbh->exec( 'PRAGMA foreign_keys = ON;' );
 		return $dbh;
 	}
 	else {

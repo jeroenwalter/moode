@@ -26,6 +26,7 @@ define('COLLECTIONS_ACTION_ADD', 'add');
 define('COLLECTIONS_ACTION_REBUILD', 'rebuild');
 define('COLLECTIONS_ACTION_EDIT', 'edit');
 define('COLLECTIONS_ACTION_ACTIVATE', 'activate');
+define('VIEW_ID_ALL', 1);
 
 playerSession('open');
 $tpl = "";
@@ -43,7 +44,7 @@ if (isset($_POST['delete']) && $_POST['delete'] == 1) {
 	unset($_GET['cmd']);
 }
 
-// save source
+// save view
 if (isset($_POST['save']) && $_POST['save'] == 1) {
 	// validate
 	$collectionId = $_POST['collection-id'];
@@ -56,19 +57,16 @@ if (isset($_POST['save']) && $_POST['save'] == 1) {
 		}
 	}
 
-	
-
 	if (empty($validationError)) {
 
 		if (empty($collectionId)) {
-			// add
 			$collectionId = createCollection($collectionName);
 		} 
 			
 		// edit existing or newly created
 		$collection = getCollection($collectionId);
 		if (!is_null($collection)) {
-			$collection['title'] = $collectionName;
+			$collection['name'] = $collectionName;
 			$collection["flatlist_filters"] = array();
 		
 			if (isset($_POST['collection-filter']) && is_array($_POST['collection-filter'])) {
@@ -108,22 +106,21 @@ if (!isset($_GET['cmd'])) {
 	// display list of collections if any
 	$collections = listCollections();
 	$activeCollection = getActiveCollection();
-	$_collectionsHtml .= "<p>Active collection: " . (empty($activeCollection['id']) ? "-" : $activeCollection['title']) . "</p>";
+	$_collectionsHtml .= "<p>Active collection: " . (empty($activeCollection['id']) ? "-" : $activeCollection['name']) . "</p>";
 	foreach ($collections as $collection) {
 		$icon = ($collection['id'] == $activeCollection['id']) ? "<i class='fas fa-check green sx'></i>" : "<i class='fas sx'></i>";
 		$_collectionsHtml .= "<p>";
 		
-		// default collection can't be edited
-		if (empty($collection['id'])) 
-			$_collectionsHtml .= "<span class='btn btn-large' style='width:240px;background-color:#333;text-align:left;'> " . $icon . " " . $collection['title'] . "</span>";
+		$isDefaultCollection = ($collection['id'] == VIEW_ID_ALL);
+
+		if ($isDefaultCollection) 
+			$_collectionsHtml .= "<span class='btn btn-large' style='width:240px;background-color:#333;text-align:left;'> " . $icon . " " . $collection['name'] . "</span>";
 		else
-			$_collectionsHtml .= "<a href=\"collections-config.php?cmd=" . COLLECTIONS_ACTION_EDIT . "&id=" . $collection['id'] . "\" class='btn btn-large' style='width:240px;background-color:#333;text-align:left;'> " . $icon . " " . $collection['title'] . "</a>";
+			$_collectionsHtml .= "<a href=\"collections-config.php?cmd=" . COLLECTIONS_ACTION_EDIT . "&id=" . $collection['id'] . "\" class='btn btn-large' style='width:240px;background-color:#333;text-align:left;'> " . $icon . " " . $collection['name'] . "</a>";
 	
 		$_collectionsHtml .= " <a href=\"collections-config.php?cmd=" . COLLECTIONS_ACTION_ACTIVATE . "&id=" . $collection['id'] ."\"><button class=\"btn btn-medium btn-primary\">Activate</button></a>";
 		
-		
-		// default collection can't be rebuild or removed
-		if (!empty($collection['id'])) {
+		if (!$isDefaultCollection)  {
 			$_collectionsHtml .= " <a href=\"collections-config.php?cmd=" . COLLECTIONS_ACTION_REBUILD . "&id=" . $collection['id'] ."\"><button class=\"btn btn-medium btn-primary\">Rebuild</button></a>";
 		}
 		
@@ -148,7 +145,7 @@ if ($_GET['cmd'] == COLLECTIONS_ACTION_EDIT || $_GET['cmd'] == COLLECTIONS_ACTIO
 		$_editCollectionId = $_GET['id'];
 		$_editCollection = getCollection($_editCollectionId);
 		if (!is_null($_editCollection)) {
-			$_editCollectionName = $_editCollection['title'];
+			$_editCollectionName = $_editCollection['name'];
 
 			foreach($_editCollection["flatlist_filters"] as $flatlist_filter) {
 				$_collectionFiltersHtml .= GetExistingFilterControls($filter_index, $flatlist_filter["filter"], $flatlist_filter["str"], true);

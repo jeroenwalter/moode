@@ -111,8 +111,6 @@ sysCmd('touch /var/local/www/currentsong.txt');
 sysCmd('touch /var/log/shairport-sync.log');
 sysCmd('mkdir ' . THMCACHE_DIR . ' > /dev/null 2>&1');
 
-setupCollections();
-
 // Delete any tmp files left over from New/Edit radio station
 sysCmd('rm /var/local/www/imagesw/radio-logos/' . TMP_STATION_PREFIX . '* > /dev/null 2>&1');
 sysCmd('rm /var/local/www/imagesw/radio-logos/thumbs/' . TMP_STATION_PREFIX . '* > /dev/null 2>&1');
